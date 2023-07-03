@@ -1,0 +1,331 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Permission {
+  id Int @id @default(autoincrement())
+  url String
+  title String
+  status Boolean @default(true)
+  rolepermission Rolepermission[]
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  role String
+  status Boolean @default(true)
+  rolepermission Rolepermission[]
+  user User[]
+}
+
+model Rolepermission {
+  id Int @id @default(autoincrement())
+  permission Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int
+  role Role @relation(fields: [roleId], references: [id])
+  roleId Int
+  status Boolean @default(true)
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  roles Role @relation(fields: [roleUId], references: [id])
+  roleUId Int
+  email String @unique
+  name String
+  password String
+  salt String
+  img_url String?
+  current_location String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(false)
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  category String
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  subcategory Subcategory[]
+}
+
+model Subcategory {
+  id Int @id @default(autoincrement())
+  category Category @relation(fields: [cateoryId], references: [id])
+  cateoryId Int
+  subcategory String
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  product Product[]
+}
+
+model Unitmeasure {
+  id Int @id @default(autoincrement())
+  measure String
+  userId Int  
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  product Product[]
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  subcategory Subcategory @relation(fields: [subcategoryId], references: [id])
+  subcategoryId Int
+  unitmeasure Unitmeasure @relation(fields: [unidadId], references: [id])
+  unidadId Int
+  code String
+  SKU String
+  name String
+  description String?
+  amount Int?
+  price Decimal?
+  stock_min Decimal?
+  stock_max Decimal?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  history_product History_Product[]
+  saledet Saledet[]
+  purchasedet Purchasedet[]
+  adjustmentdet Adjustmentdet[]
+  inventory Inventory[]
+}
+
+model History_Product {
+  id Int @id @default(autoincrement())
+  product Product @relation(fields: [historyproductId], references: id)
+  historyproductId Int
+  categoryId Int
+  unidadId Int
+  code String
+  name String
+  description String?
+  amount Int?
+  price Decimal?
+  stock_min Decimal?
+  stock_max Decimal?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model Identificationdocument {
+  id Int @id @default(autoincrement())
+  identificationdocument String
+  status Boolean @default(true)
+  naturalperson Naturalperson[]
+}
+
+model Naturalperson {
+  id Int @id @default(autoincrement())
+  names String
+  last_name String
+  telephone String
+  identificationdocument Identificationdocument @relation(fields: [identifiationId], references: [id])
+  identifiationId Int
+  numberdocument String
+  email String?
+  userId Int
+  createdAt DateTime @default(now())
+  status Boolean @default(true)
+  legalperson Legalperson[]
+  supplier Supplier[]
+  client Client[]
+}
+
+model Legalperson {
+  id Int @id @default(autoincrement())
+  business_name String
+  RUC Int
+  email String?
+  naturalperson Naturalperson? @relation(fields: [natId], references: [id])
+  natId Int?
+  supplier Supplier[]
+  client Client[]
+}
+
+enum Typesupplier {
+  NATURAL
+  JURIDICA
+}
+
+enum Typedocument {
+  BOLETA
+  FACTURA
+}
+
+enum Typemovement {
+  INGRESO
+  SALIDA
+}
+
+enum Typeadjustment {
+  POSITIVO
+  NEGATIVO
+}
+
+model Supplier {
+  id Int @id @default(autoincrement())
+  typeSupplier Typesupplier @default(JURIDICA)
+  naturalperson Naturalperson? @relation(fields: [naturalId], references: [id])
+  naturalId Int?
+  legalperson Legalperson? @relation(fields: [legalId], references: [id])
+  legalId Int?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  sale Sale[]
+}
+
+model Client {
+  id Int @id @default(autoincrement())
+  typeSupplier Typesupplier @default(NATURAL)
+  naturalperson Naturalperson? @relation(fields: [naturalId], references: [id], onDelete: SetNull)
+  naturalId Int?
+  legalperson Legalperson? @relation(fields: [legalId], references: [id])
+  legalId Int?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  purchase Purchase[]
+}
+
+model Purchase {
+  id Int @id @default(autoincrement())
+  typedocument Typedocument @default(BOLETA) 
+  document_number Int
+  monto_total Decimal?
+  client Client @relation(fields: [cientId], references: [id])
+  cientId Int
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  purchasedet Purchasedet[]
+}
+
+model Purchasedet {
+  id Int @id @default(autoincrement())
+  product Product @relation(fields: [prodPId], references: [id])
+  prodPId Int
+  purchase Purchase @relation(fields: [purcheseId], references: [id])
+  purcheseId Int
+  price Decimal?
+  amount Decimal?
+  unidad String?
+  total_amount Decimal?
+  name String?
+  description String?
+  SKU String
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  inventory Inventory[]
+}
+
+model Sale {
+  id Int @id @default(autoincrement()) 
+  typedocument Typedocument @default(BOLETA)
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  supplierId Int
+  document_number Int
+  monto_total Decimal?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  saledet Saledet[]
+}
+
+model Saledet {
+  id Int @id @default(autoincrement())
+  product Product @relation(fields: [prodSId], references: [id])
+  prodSId Int
+  sale Sale @relation(fields: [saleId], references: [id])
+  saleId Int
+  amount Decimal?
+  price Decimal?
+  total_amount Decimal?
+  unidad String?
+  name String?
+  description String?
+  SKU String
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  inventory Inventory[]
+}
+
+model Adjustment {
+  id Int @id @default(autoincrement())
+  typeadjustment Typeadjustment @default(POSITIVO)
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  djustmentdet Adjustmentdet[]
+}
+
+model Adjustmentdet {
+  id Int @id @default(autoincrement())
+  Adjustment Adjustment @relation(fields: [adjId], references: [id])
+  adjId Int
+  product Product @relation(fields: [prodAId], references: [id])
+  prodAId Int
+  amount Decimal?
+  price Decimal?
+  total_amount Decimal?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  status Boolean @default(true)
+  inventory Inventory[]
+}
+
+model Movement {
+  id Int @id @default(autoincrement())
+  type Typemovement @default(INGRESO)
+  movement String
+  abbreviation String?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  inventory Inventory[]
+}
+
+model Inventory {
+  id Int @id @default(autoincrement())
+  movement Movement @relation(fields: [movementId], references: [id])
+  movementId Int
+  product Product? @relation(fields: [prodInvetId], references: [id])
+  prodInvetId Int?
+  purchasedet Purchasedet? @relation(fields: [purchasedetId], references: [id])
+  purchasedetId Int?
+  saledet Saledet? @relation(fields: [saledetId], references: [id])
+  saledetId Int?
+  adjustmentdet Adjustmentdet? @relation(fields: [adjdetId], references: [id])
+  adjdetId Int?
+  stock Decimal?
+  amount Decimal?
+  userId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+}
